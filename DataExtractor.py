@@ -1,6 +1,9 @@
 from collections import namedtuple
+from genericpath import exists
+from importlib.resources import path
 from msilib.schema import Binary, Verb
 from operator import truediv
+import sys
 import pathlib
 from subprocess import check_output
 from os import access, chmod, R_OK
@@ -11,6 +14,7 @@ import os
 import json
 import argparse
 import mimetypes
+import urllib.request
 
 _args_quiet = ('-loglevel', 'panic')
 _args_print = ('-show_streams', '-print_format', 'json')
@@ -211,6 +215,28 @@ def CheckFile(path):
         else:
             Verbose(f"Codec not in desired {Data['codec_name']}")
 
+def FirstRun():
+    RunDirectory = os.path.realpath(os.path.dirname(sys.argv[0]))
+    Verbose("Linux Environment")
+    if system == 'Darwin':
+        if(os.path.exists(f"{RunDirectory}/binary_dependencies/ffprobe")):
+            Verbose("Binary Dependencies Exists")
+        else:
+            Verbose("Downloading Binary dependency")
+            linkToFile = "https://files.kristansmout.co.uk/Projects/PlexCodecInformation/ffprobe"
+            localDestination = f"{RunDirectory}/binary_dependencies/ffprobe"
+            resultFilePath, responseHeaders = urllib.request.urlretrieve(linkToFile, localDestination)
+
+    if system == 'Windows':
+        Verbose("Windows Environment")
+        if(os.path.exists(f"{RunDirectory}/binary_dependencies/ffprobe.exe")):
+            Verbose("Binary Dependencies Exists")
+        else:
+            Verbose("Downloading Binary dependency")
+            linkToFile = "https://files.kristansmout.co.uk/Projects/PlexCodecInformation/ffprobe.exe"
+            localDestination = f"{RunDirectory}/binary_dependencies/ffprobe.exe"
+            resultFilePath, responseHeaders = urllib.request.urlretrieve(linkToFile, localDestination)
+
 #Arguments
 parser = argparse.ArgumentParser(description="Check media files for specific codecs and file sizes")
 
@@ -238,6 +264,7 @@ parser.add_argument("-v","--verbose",
 
 args = parser.parse_args()
 #print(vars(args))
+FirstRun()
 VerboseHeader()
 if(args.verbose == True):
     Verbose("Verbose output enabled")
